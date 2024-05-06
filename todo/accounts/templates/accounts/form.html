@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App Login/Signup</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Custom styles */
+        body {
+            background-color: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100%;
+        }
+        .form-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        .nav-tabs {
+            justify-content: center;
+        }
+        .nav-tabs .nav-link {
+            color: #495057;
+            background-color: transparent;
+            border: 1px solid transparent;
+            border-radius: 0;
+            margin: 0 10px;
+            padding: 10px 20px;
+        }
+        .nav-tabs .nav-link.active {
+            background-color: #007bff;
+            color: #fff;
+            border-color: #007bff;
+        }
+        .nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
+            border-color: transparent;
+        }
+        .nav-tabs .nav-link:hover {
+            background-color: #0056b3;
+            color: #fff;
+            border-color: #0056b3;
+        }
+        .error-message {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <!-- Nav tabs -->
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" data-toggle="tab" href="#login">Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#signup">Sign Up</a>
+                </li>
+            </ul>
+
+            <!-- Tab panes -->
+            <div class="tab-content">
+                <!-- Login Tab -->
+                <div id="login" class="container tab-pane active"><br>
+                    <div class="form-container">
+                        <form id="loginForm" onsubmit="return validateLoginForm()" method="post" action="{% url "login" %}">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="loginEmail">Email address</label>
+                                <input type="email" class="form-control" id="loginEmail" name="email" aria-describedby="emailHelp" placeholder="Enter email" required>
+                                <small class="error-message" id="loginEmailError"></small>
+                            </div>
+                            <div class="form-group">
+                                <label for="loginPassword">Password</label>
+                                <input type="password" class="form-control" id="loginPassword" name="password" placeholder="Password" required>
+                                <small class="error-message" id="loginPasswordError"></small>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Login</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Signup Tab -->
+                <div id="signup" class="container tab-pane fade"><br>
+                    <div class="form-container">
+                        <form id="signupForm" onsubmit="return validateSignupForm()" method="post" action="{% url "register" %}">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="firstName">First Name</label>
+                                <input type="text" class="form-control" id="firstName" name="first_name" placeholder="Enter first name" required>
+                                <small class="error-message" id="firstNameError"></small>
+                            </div>
+                            <div class="form-group">
+                                <label for="signupEmail">Email address</label>
+                                <input type="email" class="form-control" id="signupEmail" name="email" aria-describedby="emailHelp" placeholder="Enter email" required>
+                                <small class="error-message" id="signupEmailError"></small>
+                            </div>
+                            <div class="form-group">
+                                <label for="signupPassword">Password</label>
+                                <input type="password" class="form-control" id="signupPassword" name="password" placeholder="Password" required>
+                                <small class="error-message" id="signupPasswordError"></small>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Sign Up</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS and dependencies -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+    // Validate Login Form
+    function validateLoginForm() {
+        var email = document.getElementById("loginEmail").value;
+        var password = document.getElementById("loginPassword").value;
+        var emailError = document.getElementById("loginEmailError");
+        var passwordError = document.getElementById("loginPasswordError");
+        
+        emailError.innerHTML = "";
+        passwordError.innerHTML = "";
+
+        if (email === "") {
+            emailError.innerHTML = "Please enter your email.";
+            return false;
+        }
+        if (password === "") {
+            passwordError.innerHTML = "Please enter your password.";
+            return false;
+        }
+        return true;
+    }
+
+    // Validate Signup Form
+    function validateSignupForm() {
+        var email = document.getElementById("signupEmail").value;
+        var password = document.getElementById("signupPassword").value;
+        var firstName = document.getElementById("firstName").value;
+        var emailError = document.getElementById("signupEmailError");
+        var passwordError = document.getElementById("signupPasswordError");
+        var firstNameError = document.getElementById("firstNameError");
+
+        emailError.innerHTML = "";
+        passwordError.innerHTML = "";
+        firstNameError.innerHTML = "";
+
+        if (email === "") {
+            emailError.innerHTML = "Please enter your email.";
+            return false;
+        }
+        if (password === "") {
+            passwordError.innerHTML = "Please enter your password.";
+            return false;
+        }
+        if (firstName === "") {
+            firstNameError.innerHTML = "Please enter your first name.";
+            return false;
+        }
+        return true;
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,268 @@
+{% load mathfilters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todo App</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Custom CSS -->
+  <style>
+    .priority-label {
+      margin-right: 20px;
+    }
+    .tab-pane {
+      padding: 10px;
+    }
+    .days-to-expire {
+      color: red;
+    }
+    .expired-card {
+      border: 2px solid #a80411d2; /* Add a red border to indicate the card is expired */
+    }
+    
+    .expired-message {
+        font-size: 12px;
+        color: red;
+        background-color: #f8d7da; /* Background color for the message */
+        padding: 2px 6px;
+        border-radius: 5px;
+    }
+    .high-prior{
+      background-color: rgba(255, 0, 0, 0.300);
+    }
+    .medium-prior{
+      background-color: rgba(255, 208, 0, 0.300);
+    }
+    .low-prior{
+      background-color: rgba(0, 183, 255, 0.300);
+    }
+    .priority-label{
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .navbar-nav {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light pe-4 ps-4">
+    <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+            <span class="nav-link" style="text-transform: capitalize;">{{request.user.first_name}}</span>
+        </li>
+        <li class="nav-item ms-auto" style="justify-self: flex-end;">
+            <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
+        </li>
+    </ul>
+  </nav>
+
+  <div class="container mt-4">
+    <div class="row">
+      <div class="col-md-6">
+        <h2>Todos</h2>
+        <ul class="nav nav-tabs" id="todoTabs" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link active" id="pending-tab" data-toggle="tab" href="#pending" role="tab" aria-controls="pending" aria-selected="true">Pending</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="completed-tab" data-toggle="tab" href="#completed" role="tab" aria-controls="completed" aria-selected="false">Completed</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="expired-tab" data-toggle="tab" href="#expired" role="tab" aria-controls="expired" aria-selected="false">Expired</a>
+          </li>
+        </ul>
+        <div class="tab-content mt-3" id="todoTabsContent">
+          <div class="tab-pane fade show active" id="pending" role="tabpanel" aria-labelledby="pending-tab">
+            <div id="pendingTodos">
+              {% for todo in todos %}
+                {% with date_exp=todo.date_expire %}
+                {% with date_diff=date_exp|sub:today %}
+                  {% if not todo.is_completed and date_diff.days >= 0 %}
+                    <div class="card mb-2 
+                    {% if todo.priority == 1 %}
+                      high-prior
+                    {% elif todo.priority == 2 %}
+                      medium-prior
+                    {% else %}
+                      low-prior
+                    {% endif %}"
+                    >
+                        <div class="card-body">
+                          <h5 class="card-title">{{todo.title}}</h5>
+                          <p class="card-text">{{todo.desc}}</p>
+                          <p class="card-text">Expire Date: {{todo.date_expire}} <span class="days-to-expire">({{date_diff.days}} days left)</span></p>
+                          <a class="btn btn-primary btn-sm mr-2 editTodo" data-id="{{todo.id}}" href="{% url "todo-update" pk=todo.id %}">Edit</a>
+                          <a class="btn btn-success btn-sm mr-2 completeTodo" data-id="{{todo.id}}" href="{% url "todo-complete-toggle" pk=todo.id %}">Complete</a>
+                          <a class="btn btn-danger btn-sm deleteTodo" data-id="{{todo.id}}" href="{% url "todo-delete" pk=todo.id %}">Delete</a>
+                        </div>
+                      </div>
+                  {% endif %}
+                {% endwith %}
+                {% endwith %}
+              {% endfor %}
+            </div>
+          </div>
+          <div class="tab-pane fade" id="completed" role="tabpanel" aria-labelledby="completed-tab">
+            <div id="completedTodos">
+              {% for todo in todos %}
+                {% with date_exp=todo.date_expire %}
+                {% with date_diff=date_exp|sub:today %}
+                  {% if todo.is_completed %}
+                    <div class="card mb-2">
+                        <div class="card-body">
+                          <h5 class="card-title"><strike>{{todo.title}}</strike></h5>
+                          <p class="card-text"><strike>{{todo.desc}}</strike></p>
+                          <a class="btn btn-danger btn-sm mr-2 completeTodo" data-id="{{todo.id}}" href="{% url "todo-complete-toggle" pk=todo.id %}">Incomplete</a>
+                        </div>
+                      </div>
+                  {% endif %}
+                {% endwith %}
+                {% endwith %}
+              {% endfor %}
+            </div>
+          </div>
+          <div class="tab-pane fade" id="expired" role="tabpanel" aria-labelledby="expired-tab">
+            <div id="expiredTodos">
+              {% for todo in todos %}
+                {% with date_exp=todo.date_expire %}
+                {% with date_diff=date_exp|sub:today %}
+                  {% if not todo.is_completed and date_diff.days < 0 %}
+                    <div class="card mb-2 expired-card">
+                      <div class="card-body">
+                          <div class="d-flex justify-content-between">
+                              <h5 class="card-title"><strike>{{ todo.title }}</strike></h5>
+                              <span class="expired-message">Todo Expired</span>
+                          </div>
+                          <p class="card-text"><strike>{{ todo.desc }}</strike></p>
+                          <a class="btn btn-secondary btn-sm mr-2 editTodo" data-id="{{ todo.id }}" href="{% url "todo-update" pk=todo.id %}">Edit</a>
+                          <a class="btn btn-danger btn-sm deleteTodo" data-id="{{todo.id}}" href="{% url "todo-delete" pk=todo.id %}">Delete</a>
+                      </div>
+                    </div>
+                  {% endif %}
+                {% endwith %}
+                {% endwith %}
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <h2 class="mb-4">Add Todo</h2>
+        {% if edit %}
+          <form id="todoForm" method="POST" action="{% url 'todo-update' pk=edit.id %}">
+            {% csrf_token %}
+            <div class="form-group">
+              <label for="todoTitle">Title</label>
+              <input type="text" class="form-control" id="todoTitle" placeholder="Enter todo title" name="title" value="{{edit.title}}">
+            </div>
+            <div class="form-group">
+              <label for="todoDescription">Description</label>
+              <textarea class="form-control" id="todoDescription" rows="3" placeholder="Enter todo description" name="desc">{{edit.desc}}</textarea>
+            </div>
+            <div class="form-group">
+              <label for="todoExpireDate">Expire Date</label>
+              <input type="date" class="form-control" id="todoExpireDate" name="date_expire" value="{{edit.date_expire|date:'Y-m-d'}}">
+            </div>
+            <div class="form-group">
+              <label for="priority">Priority</label>
+              <div class="form-inline">
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="priority" id="highPriority" value="1" {% if edit.priority == 1 %}checked{% endif %}>
+                  <label class="form-check-label priority-label" for="highPriority" style="background-color: rgba(255, 0, 0, 0.300);">High</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="priority" id="mediumPriority" value="2" {% if edit.priority == 2 %}checked{% endif %}>
+                  <label class="form-check-label priority-label" for="mediumPriority" style="background-color: rgba(255, 208, 0, 0.300);">Medium</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="priority" id="lowPriority" value="3" {% if edit.priority == 3 %}checked{% endif %}>
+                  <label class="form-check-label priority-label" for="lowPriority" style="background-color: rgba(0, 183, 255, 0.300);">Low</label>
+                </div>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary mt-2">Update</button>
+          </form>
+        {% else %}
+          <form id="todoForm" method="POST" action="{% url 'todo-create'%}">
+            {% csrf_token %}
+            <div class="form-group">
+              <label for="todoTitle">Title</label>
+              <input type="text" class="form-control" id="todoTitle" placeholder="Enter todo title" name="title" required>
+            </div>
+            <div class="form-group">
+              <label for="todoDescription">Description</label>
+              <textarea class="form-control" id="todoDescription" rows="3" placeholder="Enter todo description" name="desc"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="todoExpireDate">Expire Date</label>
+              <input type="date" class="form-control" id="todoExpireDate" name="date_expire" required>
+            </div>
+            <div class="form-group">
+              <label for="priority">Priority</label>
+              <div class="form-inline">
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="priority" id="highPriority" value="1" required>
+                  <label class="form-check-label priority-label" for="highPriority" style="background-color: rgba(255, 0, 0, 0.300);">High</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="priority" id="mediumPriority" value="2">
+                  <label class="form-check-label priority-label" for="mediumPriority" style="background-color: rgba(255, 208, 0, 0.300);">Medium</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="priority" id="lowPriority" value="3">
+                  <label class="form-check-label priority-label" for="lowPriority" style="background-color: rgba(0, 183, 255, 0.300);">Low</label>
+                </div>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary mt-2">Add</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS and jQuery -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <!-- Custom JavaScript -->
+  <script>
+    $(document).ready(function() {
+
+      // Complete Todo
+      $(document).on('click', '.completeTodo', function() {
+        let id = $(this).data('id');
+        let todo = todos.find(item => item.id === id);
+        todo.completed = true;
+        displayTodos('pending');
+      });
+
+      // Delete Todo
+      $(document).on('click', '.deleteTodo', function() {
+        let id = $(this).data('id');
+        todos = todos.filter(item => item.id !== id);
+        displayTodos('pending');
+      });
+
+      // Change Expiry Date
+      $(document).on('click', '.changeExpireDate', function() {
+        let id = $(this).data('id');
+        let todo = todos.find(item => item.id === id);
+        let newExpireDate = prompt('Enter new expiry date (YYYY-MM-DD):', todo.expireDate);
+        if (newExpireDate && !isNaN(Date.parse(newExpireDate))) {
+          todo.expireDate = newExpireDate;
+          displayTodos('expired');
+        } else {
+          alert('Invalid date format or date. Please enter in YYYY-MM-DD format.');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
